@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <title>環境保衛戰 - 強化偵測版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style> body { margin: 0; overflow: hidden; background: #50a03c; touch-action: none; } </style>
 </head>
@@ -17,53 +18,28 @@ let leftJoy = { active: false, id: -1, x: 0, y: 0, currX: 0, currY: 0 };
 let rightJoy = { active: false, id: -1, x: 0, y: 0, currX: 0, currY: 0 };
 let joySize = 130;
 
-const TYPE_GENERAL = 0;   
-const TYPE_GLASS = 1;     
-const TYPE_PAPER_BOX = 2; 
-const TYPE_PLASTIC = 3;   
-const TYPE_ALUMINUM = 4;  
+const TYPE_GENERAL = 0, TYPE_GLASS = 1, TYPE_PAPER_BOX = 2, TYPE_PLASTIC = 3, TYPE_ALUMINUM = 4;
 
 function preload() {
-    // 1. 載入怪物圖片 (對應 GitHub 上的 png 檔)
-    imgs[0] = loadImage('怪物1號.png'); 
-    imgs[1] = loadImage('怪物二號.png'); 
-    imgs[2] = loadImage('怪物三號.png'); 
-    imgs[3] = loadImage('怪物四號.png'); 
-
-    // 2. 載入垃圾桶圖片 (所有副檔名皆改為 .png 以符合 GitHub 現況)
-    binImgs[TYPE_GENERAL] = { 
-        close: loadImage('一般垃圾桶.png'), 
-        open: loadImage('一般垃圾桶打開.png') 
-    };
-    binImgs[TYPE_GLASS] = { 
-        close: loadImage('玻璃回收桶.png'), 
-        open: loadImage('玻璃回收桶打開.png') 
-    };
-    binImgs[TYPE_PAPER_BOX] = { 
-        close: loadImage('紙餐盒回收桶.png'), 
-        open: loadImage('紙餐盒回收桶打開.png') 
-    };
-    binImgs[TYPE_PLASTIC] = { 
-        close: loadImage('塑膠瓶回收桶.png'), 
-        open: loadImage('塑膠瓶回收桶打開.png') 
-    };
-    binImgs[TYPE_ALUMINUM] = { 
-        close: loadImage('鋁箔包回收桶.png'), 
-        open: loadImage('鋁箔包回收桶打開.png') 
-    };
+    // 載入怪物與垃圾桶圖片 (請確保檔名與 GitHub 一致)
+    imgs = [loadImage('怪物1號.png'), loadImage('怪物二號.png'), loadImage('怪物三號.png'), loadImage('怪物四號.png'), loadImage('怪物1號.png')];
+    binImgs[TYPE_GENERAL] = { close: loadImage('一般垃圾桶.png'), open: loadImage('一般垃圾桶打開.png') };
+    binImgs[TYPE_GLASS] = { close: loadImage('玻璃回收桶.png'), open: loadImage('玻璃回收桶打開.png') };
+    binImgs[TYPE_PAPER_BOX] = { close: loadImage('紙餐盒回收桶.png'), open: loadImage('紙餐盒回收桶打開.png') };
+    binImgs[TYPE_PLASTIC] = { close: loadImage('塑膠瓶回收桶.png'), open: loadImage('塑膠瓶回收桶打開.png') };
+    binImgs[TYPE_ALUMINUM] = { close: loadImage('鋁箔包回收桶.png'), open: loadImage('鋁箔包回收桶打開.png') };
 }
 
 function setup() { 
     createCanvas(windowWidth, windowHeight); 
     player = new Player(); 
-    
     let spacing = width / 5;
     for(let i=0; i<5; i++) {
         bins.push({ 
             x: spacing * i + spacing/2, 
-            y: height - 120, 
-            w: 100, 
-            h: 120, 
+            y: height - 130, // 稍微上調位置
+            w: 140, // 放大圖示寬度 (原 100)
+            h: 160, // 放大圖示高度 (原 120)
             type: i, 
             isOpen: false 
         });
@@ -72,56 +48,49 @@ function setup() {
 
 function draw() {
     if (gameOver) {
-        background(0, 200); fill(255, 50, 50); textAlign(CENTER); textSize(40);
+        background(0, 200); fill(255); textAlign(CENTER); textSize(40);
         text("環境守護失敗！", width/2, height/2);
-        textSize(20); fill(255); text("點擊畫面重新開始", width/2, height/2 + 50);
+        textSize(20); text("點擊畫面重新開始", width/2, height/2 + 50);
         return;
     }
-    
-    if (screenShake > 0) {
-        translate(random(-screenShake, screenShake), random(-screenShake, screenShake));
-        screenShake *= 0.9;
-    }
-
+    if (screenShake > 0) { translate(random(-screenShake, screenShake), random(-screenShake, screenShake)); screenShake *= 0.9; }
     background(80, 160, 60); 
     drawGrass();
     handleInput();
     drawPhotoBins();
-
-    player.update(); 
-    player.display();
+    player.update(); player.display();
 
     if (totalCleaned < TARGET_CLEANED) {
         if (frameCount % 80 === 0 && enemies.length < 8) enemies.push(new NightMarketMonster());
-    } else if (!boss) {
-        boss = new StyrofoamTitan();
-        enemies = []; 
-    }
+    } else if (!boss) { boss = new StyrofoamTitan(); enemies = []; }
 
-    if (boss) {
-        boss.update(); boss.display();
-        if (boss.hp <= 0) {
-            noLoop(); background(0, 200); fill(0, 255, 100); textAlign(CENTER); textSize(35);
-            text("成功淨化保麗龍泰坦！", width/2, height/2);
-        }
-    }
-
+    if (boss) { boss.update(); boss.display(); if (boss.hp <= 0) { noLoop(); background(0, 200); fill(0, 255, 100); textAlign(CENTER); text("成功淨化保麗龍泰坦！", width/2, height/2); } }
     processGameLogic(); 
     drawUI();
     drawJoystick(leftJoy, color(0, 200, 255, 80));
-    drawJoystick(rightJoy, color(255, 50, 50, 80));
 }
 
 function drawPhotoBins() {
     imageMode(CENTER);
     for (let b of bins) {
         let d = dist(player.x, player.y, b.x, b.y);
-        b.isOpen = (currentCarryType === b.type && d < 150);
-        fill(0, 50); noStroke(); ellipse(b.x, b.y + 50, b.w * 0.8, 20);
+        // 靠近 180 像素就打開蓋子，提示玩家
+        b.isOpen = (currentCarryType === b.type && d < 180);
+        
+        // 繪製陰影
+        fill(0, 30); noStroke(); ellipse(b.x, b.y + 70, b.w * 0.8, 30);
+        
+        // 如果攜帶正確垃圾且靠近，增加高亮光圈
+        if (b.isOpen) {
+            noFill(); stroke(255, 255, 255, 150); strokeWeight(5);
+            ellipse(b.x, b.y + 20, b.w * 1.1, b.h * 0.8);
+        }
+
         let imgObj = binImgs[b.type];
-        if (imgObj && imgObj.close && imgObj.open) {
-            let activeImg = b.isOpen ? imgObj.open : imgObj.close;
-            image(activeImg, b.x, b.y, b.w, b.h);
+        if (imgObj && imgObj.close.width > 1) {
+            image(b.isOpen ? imgObj.open : imgObj.close, b.x, b.y, b.w, b.h);
+        } else {
+            fill(150); rect(b.x, b.y, b.w, b.h); // 讀取失敗時的備用方塊
         }
     }
 }
@@ -130,208 +99,95 @@ class Player {
     constructor() { this.x = width/2; this.y = height*0.5; this.vx = 0; this.vy = 0; this.hp = 100; }
     update() {
         this.vx *= 0.85; this.vy *= 0.85; this.x += this.vx; this.y += this.vy;
-        this.x = constrain(this.x, 20, width-20); this.y = constrain(this.y, 20, height-250);
+        this.x = constrain(this.x, 20, width-20); this.y = constrain(this.y, 20, height-280);
     }
     display() {
-        push(); translate(this.x, this.y);
-        if (this.vx < -0.1) scale(-1, 1);
-        noStroke();
-        let earShake = sin(frameCount * 0.2) * 2;
-        fill(255); ellipse(-8, -25 + earShake, 10, 25); ellipse(8, -25 - earShake, 10, 25);
-        fill(255, 200, 200); ellipse(-8, -22 + earShake, 5, 15); ellipse(8, -22 - earShake, 5, 15);
-        fill(255); ellipse(0, 0, 40, 40);
+        push(); translate(this.x, this.y); if (this.vx < -0.1) scale(-1, 1);
+        fill(255); noStroke(); ellipse(0, 0, 45, 45); // 稍微放大玩家
         fill(255, 50, 50); ellipse(-10, -5, 6, 8); ellipse(10, -5, 6, 8);
-        fill(255, 150, 150); triangle(0, 0, -3, -3, 3, -3);
-        fill(255); ellipse(18, 12, 12, 12);
         pop();
     }
 }
 
 class NightMarketMonster {
-    constructor() { 
-        this.x = random(width); this.y = -50; this.hp = 2; 
-        this.imgIndex = floor(random(5)); // 對應 5 種桶子
-        this.isPickedUp = false; 
-    }
+    constructor() { this.x = random(width); this.y = -50; this.hp = 2; this.imgIndex = floor(random(5)); this.isPickedUp = false; }
 }
 
 class StyrofoamTitan {
-    constructor() {
-        this.x = width/2; this.y = -200; this.targetY = 200;
-        this.hp = 350; this.maxHp = 350; this.timer = 0;
-    }
-    update() {
-        this.timer++;
-        let isRage = this.hp < this.maxHp / 2;
-        if (this.y < this.targetY) this.y += 3;
-        let speedMult = isRage ? 2.5 : 1;
-        this.x = width/2 + sin(frameCount * 0.02 * speedMult) * (width/3);
-        if (frameCount % (isRage ? 60 : 100) === 0) {
-            if (random() > 0.7) this.ultimate(); else this.shotgunAttack();
-        } else if (frameCount % 40 === 0) {
-            bossBullets.push(new Bullet(this.x, this.y, atan2(player.y-this.y, player.x-this.x), true));
-        }
-    }
-    shotgunAttack() {
-        let baseA = atan2(player.y - this.y, player.x - this.x);
-        for (let i = -2; i <= 2; i++) bossBullets.push(new Bullet(this.x, this.y, baseA + i * 0.2, true));
-    }
-    ultimate() {
-        screenShake = 15;
-        for (let a = 0; a < TWO_PI; a += PI/8) bossBullets.push(new Bullet(this.x, this.y, a, true, 8));
-    }
-    display() {
-        let isRage = this.hp < this.maxHp / 2;
-        push(); translate(this.x, this.y); 
-        if(isRage) tint(255, 100, 100);
-        rectMode(CENTER); noStroke();
-        fill(200); rect(-80 + sin(frameCount*0.1)*10, 10, 50, 70, 5); 
-        rect(80 + sin(frameCount*0.1 + PI)*10, 10, 50, 70, 5);
-        fill(245); rect(0, 0, 110, 120, 15);
-        fill(isRage ? color(255, 0, 0) : 20); ellipse(-25, -15, 35, 40); ellipse(25, -15, 35, 40);
-        fill(50, 150); rect(0, -120, 200, 15);
-        fill(isRage ? color(255, 0, 0) : color(255, 200, 0)); 
-        rectMode(CORNER); rect(-100, -127, map(this.hp, 0, this.maxHp, 0, 200), 15);
-        pop();
-    }
+    constructor() { this.x = width/2; this.y = -200; this.targetY = 200; this.hp = 350; this.maxHp = 350; }
+    update() { if (this.y < this.targetY) this.y += 3; this.x = width/2 + sin(frameCount * 0.02) * (width/3); if (frameCount % 90 === 0) this.shotgunAttack(); }
+    shotgunAttack() { let a = atan2(player.y - this.y, player.x - this.x); for (let i = -2; i <= 2; i++) bossBullets.push(new Bullet(this.x, this.y, a + i * 0.2, true)); }
+    display() { push(); translate(this.x, this.y); fill(245); rect(0, 0, 110, 120, 10); fill(255, 0, 0); rect(-100, -100, map(this.hp, 0, this.maxHp, 0, 200), 15); pop(); }
 }
 
 class Bullet {
-    constructor(x, y, a, isBoss = false, speed = 12) { 
-        this.x = x; this.y = y; this.a = a; this.isBoss = isBoss; 
-        this.speed = isBoss ? (speed * 0.6) : speed;
-    }
+    constructor(x, y, a, isBoss = false) { this.x = x; this.y = y; this.a = a; this.isBoss = isBoss; this.speed = isBoss ? 6 : 12; }
     update() { this.x += cos(this.a)*this.speed; this.y += sin(this.a)*this.speed; }
-    display() { 
-        fill(this.isBoss?color(255, 255, 0):color(0, 255, 200)); 
-        noStroke(); ellipse(this.x, this.y, this.isBoss?25:10, this.isBoss?25:10);
-    }
+    display() { fill(this.isBoss?255:0, 255, 200); ellipse(this.x, this.y, 10, 10); }
 }
 
 function processGameLogic() {
+    // 子彈碰撞
     for (let i = bullets.length - 1; i >= 0; i--) {
         bullets[i].update(); bullets[i].display();
-        let hit = false;
-        if (boss && dist(bullets[i].x, bullets[i].y, boss.x, boss.y) < 70) { boss.hp -= 5; hit = true; screenShake = 3; }
+        if (boss && dist(bullets[i].x, bullets[i].y, boss.x, boss.y) < 60) { boss.hp -= 5; bullets.splice(i, 1); continue; }
         for (let j = enemies.length - 1; j >= 0; j--) {
-            if (dist(bullets[i].x, bullets[i].y, enemies[j].x, enemies[j].y) < 30) {
+            if (dist(bullets[i].x, bullets[i].y, enemies[j].x, enemies[j].y) < 35) {
                 enemies[j].hp--; if (enemies[j].hp <= 0) { deadQueue.push(enemies[j]); enemies.splice(j, 1); }
-                hit = true; break;
+                bullets.splice(i, 1); break;
             }
         }
-        if (hit || bullets[i].y < 0 || bullets[i].x < 0 || bullets[i].x > width) bullets.splice(i, 1);
     }
 
+    // 活著的怪物
     for (let e of enemies) {
-        let a = atan2(player.y-e.y, player.x-e.x); e.x += cos(a)*2.2; e.y += sin(a)*2.2;
-        let monsterImg = imgs[e.imgIndex % 4];
-        if (monsterImg) image(monsterImg, e.x, e.y, 50, 50);
-        if (dist(e.x, e.y, player.x, player.y) < 35) player.hp -= 0.5;
+        let a = atan2(player.y-e.y, player.x-e.x); e.x += cos(a)*2; e.y += sin(a)*2;
+        if (imgs[e.imgIndex]) image(imgs[e.imgIndex], e.x, e.y, 55, 55);
+        if (dist(e.x, e.y, player.x, player.y) < 40) player.hp -= 0.3;
     }
 
+    // 掉落的垃圾與回收邏輯
     let pickedUpList = deadQueue.filter(e => e.isPickedUp);
     if (pickedUpList.length === 0) currentCarryType = -1;
     
-    for (let i = 0; i < deadQueue.length; i++) {
+    for (let i = deadQueue.length - 1; i >= 0; i--) {
         let e = deadQueue[i];
         if (!e.isPickedUp) {
-            if (dist(player.x, player.y, e.x, e.y) < 50) {
+            // 拾取半徑稍微放大到 60
+            if (dist(player.x, player.y, e.x, e.y) < 60) {
                 if (currentCarryType === -1 || e.imgIndex === currentCarryType) { e.isPickedUp = true; currentCarryType = e.imgIndex; }
             }
         } else {
-            let targetX, targetY; let myOrder = pickedUpList.indexOf(e);
-            if (myOrder === 0) { targetX = player.x; targetY = player.y + 45; }
-            else { targetX = pickedUpList[myOrder-1].x; targetY = pickedUpList[myOrder-1].y + 35; }
-            e.x = lerp(e.x, targetX, 0.2); e.y = lerp(e.y, targetY, 0.2);
-        }
-        push(); translate(e.x, e.y);
-        if (e.isPickedUp) drawingContext.globalAlpha = 0.6;
-        let monsterImg = imgs[e.imgIndex % 4];
-        if (monsterImg) image(monsterImg, 0, 0, 45, 45); pop();
-    }
-
-    if (pickedUpList.length > 0) {
-        let first = pickedUpList[0];
-        for (let b of bins) {
-            if (dist(first.x, first.y, b.x, b.y) < 70) {
-                if (first.imgIndex === b.type) { 
-                    score += 100; totalCleaned++; player.hp = min(100, player.hp + 10); 
-                    deadQueue.splice(deadQueue.indexOf(first), 1);
-                } else {
-                    score -= 50; player.hp -= 10; screenShake = 10;
-                }
-                break;
+            e.x = lerp(e.x, player.x, 0.2); e.y = lerp(e.y, player.y + 45, 0.2);
+            
+            // 重要：偵測回收半徑放大到 100 (原 60)
+            let b = bins[e.imgIndex];
+            if (dist(e.x, e.y, b.x, b.y) < 100) {
+                score += 100; totalCleaned++; player.hp = min(100, player.hp + 8);
+                deadQueue.splice(i, 1); continue;
             }
         }
+        if (imgs[e.imgIndex]) { push(); if(e.isPickedUp) tint(255, 180); image(imgs[e.imgIndex], e.x, e.y, 45, 45); pop(); }
     }
 
-    for (let i = bossBullets.length-1; i >= 0; i--) {
-        bossBullets[i].update(); bossBullets[i].display();
-        if (dist(bossBullets[i].x, bossBullets[i].y, player.x, player.y) < 25) { 
-            player.hp -= 15; bossBullets.splice(i, 1); screenShake = 8;
-        }
-    }
+    for (let b of bossBullets) { b.update(); b.display(); if (dist(b.x, b.y, player.x, player.y) < 25) { player.hp -= 10; b.x = -1000; } }
     if (player.hp <= 0) gameOver = true;
 }
 
-function drawGrass() {
-    stroke(60, 140, 50); strokeWeight(2);
-    for(let i=50; i<width; i+=150) {
-        for(let j=50; j<height; j+=150) {
-            line(i, j, i-5, j+10); line(i, j, i+5, j+10);
-        }
-    }
-}
+function drawGrass() { stroke(60, 140, 50); for(let i=50; i<width; i+=150) { for(let j=50; j<height; j+=150) line(i, j, i-5, j+10); } }
 
 function handleInput() {
-    let moveSpeed = 2.0;
-    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) player.vx -= moveSpeed;
-    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) player.vx += moveSpeed;
-    if (keyIsDown(UP_ARROW) || keyIsDown(87)) player.vy -= moveSpeed;
-    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) player.vy += moveSpeed;
-    if (mouseIsPressed && !leftJoy.active && !rightJoy.active && frameCount % 7 === 0) {
-        bullets.push(new Bullet(player.x, player.y, atan2(mouseY - player.y, mouseX - player.x)));
-    }
-    if (leftJoy.active) {
-        let a = atan2(leftJoy.currY - leftJoy.y, leftJoy.currX - leftJoy.x);
-        let d = min(dist(leftJoy.x, leftJoy.y, leftJoy.currX, leftJoy.currY), joySize/2);
-        player.vx += cos(a) * (d/(joySize/2)) * 2.5; player.vy += sin(a) * (d/(joySize/2)) * 2.5;
-    }
-    if (rightJoy.active && frameCount % 7 === 0) {
-        bullets.push(new Bullet(player.x, player.y, atan2(rightJoy.currY - rightJoy.y, rightJoy.currX - rightJoy.x)));
-    }
+    if (keyIsDown(65) || keyIsDown(LEFT_ARROW)) player.vx -= 2;
+    if (keyIsDown(68) || keyIsDown(RIGHT_ARROW)) player.vx += 2;
+    if (keyIsDown(87) || keyIsDown(UP_ARROW)) player.vy -= 2;
+    if (keyIsDown(83) || keyIsDown(DOWN_ARROW)) player.vy += 2;
+    if (mouseIsPressed && frameCount % 8 === 0) bullets.push(new Bullet(player.x, player.y, atan2(mouseY-player.y, mouseX-player.x)));
 }
 
-function drawUI() {
-    fill(255); textAlign(LEFT); textSize(18); 
-    text(`小白兔生命: ${floor(player.hp)}%`, 20, 30); 
-    text(`已回收: ${totalCleaned} / ${TARGET_CLEANED}`, 20, 60);
-}
-
-function touchStarted() {
-    for (let t of touches) {
-        if (t.x < width/2 && !leftJoy.active) { leftJoy.active = true; leftJoy.id = t.id; leftJoy.x = t.x; leftJoy.y = t.y; leftJoy.currX = t.x; leftJoy.currY = t.y; }
-        else if (t.x >= width/2 && !rightJoy.active) { rightJoy.active = true; rightJoy.id = t.id; rightJoy.x = t.x; rightJoy.y = t.y; rightJoy.currX = t.x; rightJoy.currY = t.y; }
-    }
-    if (gameOver) location.reload(); return false;
-}
-function touchMoved() {
-    for (let t of touches) { if (t.id === leftJoy.id) { leftJoy.currX = t.x; leftJoy.currY = t.y; } if (t.id === rightJoy.id) { rightJoy.currX = t.x; rightJoy.currY = t.y; } }
-    return false;
-}
-function touchEnded() {
-    let sL = false, sR = false; for (let t of touches) { if (t.id === leftJoy.id) sL = true; if (t.id === rightJoy.id) sR = true; }
-    if (!sL) leftJoy.active = false; if (!sR) rightJoy.active = false; return false;
-}
-function drawJoystick(joy, col) {
-    if (joy.active) {
-        fill(col); noStroke(); ellipse(joy.x, joy.y, joySize);
-        let a = atan2(joy.currY - joy.y, joy.currX - joy.x);
-        let d = min(dist(joy.x, joy.y, joy.currX, joy.currY), joySize/2);
-        fill(255, 150); ellipse(joy.x + cos(a)*d, joy.y + sin(a)*d, 60);
-    }
-}
+function drawUI() { fill(255); textSize(22); text(`生命: ${floor(player.hp)}%  得分: ${score}  回收: ${totalCleaned}/${TARGET_CLEANED}`, 20, 40); }
+function touchStarted() { if (gameOver) location.reload(); return false; }
 function mousePressed() { if (gameOver) location.reload(); }
+function drawJoystick(joy, col) { if (joy.active) { fill(col); ellipse(joy.x, joy.y, joySize); } }
 </script>
 </body>
 </html>
