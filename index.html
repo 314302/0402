@@ -1,3 +1,12 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style> body { margin: 0; overflow: hidden; background: #50a03c; touch-action: none; } </style>
+</head>
+<body>
+<script>
 let player, bullets = [], enemies = [], deadQueue = [], bossBullets = [], boss;
 let imgs = []; // 怪物圖片
 let binImgs = []; // 垃圾桶圖片物件陣列
@@ -16,16 +25,16 @@ const TYPE_PLASTIC = 3;   // 塑膠瓶
 const TYPE_ALUMINUM = 4;  // 鋁箔包
 
 function preload() {
-    // 1. 怪物圖片 (保留原樣)
+    // 1. 載入怪物圖片 (保留原樣)
     imgs[0] = loadImage('怪物1號.png'); 
     imgs[1] = loadImage('怪物二號.png'); 
     imgs[2] = loadImage('怪物三號.png'); 
     imgs[3] = loadImage('怪物四號.png'); 
-    imgs[4] = loadImage('怪物1號.png'); // 第五種暫代
 
-    // 2. 載入你提供的五組垃圾桶照片 (開與關)
+    // 2. 載入 5 組垃圾桶照片 (開與關)
+    // 請確保 GitHub 上的檔名與此處字串完全一致
     binImgs[TYPE_GENERAL] = { close: loadImage('一般垃圾桶.jpg'), open: loadImage('一般垃圾桶打開.jpg') };
-    binImgs[TYPE_GLASS] = { close: loadImage('玻璃瓶回收桶.jpg'), open: loadImage('玻璃瓶回收桶打開.jpg') };
+    binImgs[TYPE_GLASS] = { close: loadImage('玻璃回收桶.jpg'), open: loadImage('玻璃回收桶打開.jpg') };
     binImgs[TYPE_PAPER_BOX] = { close: loadImage('紙餐盒回收桶.jpg'), open: loadImage('紙餐盒回收桶打開.jpg') };
     binImgs[TYPE_PLASTIC] = { close: loadImage('塑膠瓶回收桶.jpg'), open: loadImage('塑膠瓶回收桶打開.jpg') };
     binImgs[TYPE_ALUMINUM] = { close: loadImage('鋁箔包回收桶.jpg'), open: loadImage('鋁箔包回收桶打開.jpg') };
@@ -35,7 +44,7 @@ function setup() {
     createCanvas(windowWidth, windowHeight); 
     player = new Player(); 
     
-    // 初始化五個垃圾桶位置
+    // 初始化五個垃圾桶位置 (橫向均勻排列)
     let spacing = width / 5;
     for(let i=0; i<5; i++) {
         bins.push({ 
@@ -53,7 +62,7 @@ function draw() {
     if (gameOver) {
         background(0, 200); fill(255, 50, 50); textAlign(CENTER); textSize(40);
         text("環境守護失敗！", width/2, height/2);
-        textSize(20); fill(255); text("點擊畫面重新開始", width/2, height/2 + 50);
+        textSize(20); fill(255); text("按 F5 或 點擊畫面 重新開始", width/2, height/2 + 50);
         return;
     }
     
@@ -66,13 +75,13 @@ function draw() {
     drawGrass();
     handleInput();
     
-    // --- 繪製新版照片垃圾桶 ---
+    // 繪製照片垃圾桶
     drawPhotoBins();
 
     player.update(); 
     player.display();
 
-    // 怪物生成與 Boss 邏輯 (保留原樣)
+    // 怪物生成邏輯
     if (totalCleaned < TARGET_CLEANED) {
         if (frameCount % 80 === 0 && enemies.length < 8) enemies.push(new NightMarketMonster());
     } else if (!boss) {
@@ -94,14 +103,13 @@ function draw() {
     drawJoystick(rightJoy, color(255, 50, 50, 80));
 }
 
-// 替換原本的 drawFancyBins
 function drawPhotoBins() {
     imageMode(CENTER);
     for (let b of bins) {
         // 判定玩家是否帶著「正確類別」的垃圾靠近
         let d = dist(player.x, player.y, b.x, b.y);
         
-        // 如果玩家拿著該桶子對應的垃圾且距離小於 150，桶子打開
+        // 感應：如果拿著對應垃圾且靠近 150 像素，桶子就打開
         if (currentCarryType === b.type && d < 150) {
             b.isOpen = true;
         } else {
@@ -111,7 +119,7 @@ function drawPhotoBins() {
         // 畫影子
         fill(0, 50); noStroke(); ellipse(b.x, b.y + 45, b.w * 0.8, 20);
 
-        // 根據 isOpen 狀態畫出對應的照片
+        // 繪製照片
         let imgObj = binImgs[b.type];
         if (imgObj) {
             let activeImg = b.isOpen ? imgObj.open : imgObj.close;
@@ -119,8 +127,6 @@ function drawPhotoBins() {
         }
     }
 }
-
-// --- 以下為你原本的所有核心邏輯與 Class (完整保留) ---
 
 class Player {
     constructor() { this.x = width/2; this.y = height*0.5; this.vx = 0; this.vy = 0; this.hp = 100; }
@@ -140,14 +146,6 @@ class Player {
         fill(255, 150, 150); triangle(0, 0, -3, -3, 3, -3);
         fill(255); ellipse(18, 12, 12, 12);
         pop();
-    }
-}
-
-class NightMarketMonster {
-    constructor() { 
-        this.x = random(width); this.y = -50; this.hp = 2; 
-        this.imgIndex = floor(random(5)); // 改為 5 種垃圾類型
-        this.isPickedUp = false; 
     }
 }
 
@@ -205,7 +203,7 @@ class Bullet {
 }
 
 function processGameLogic() {
-    // 子彈碰撞邏輯
+    // 1. 子彈與怪物碰撞
     for (let i = bullets.length - 1; i >= 0; i--) {
         bullets[i].update(); bullets[i].display();
         let hit = false;
@@ -219,25 +217,31 @@ function processGameLogic() {
         if (hit || bullets[i].y < 0 || bullets[i].x < 0 || bullets[i].x > width) bullets.splice(i, 1);
     }
 
-    // 怪物移動與傷害
+    // 2. 怪物移動與傷害玩家
     for (let e of enemies) {
         let a = atan2(player.y-e.y, player.x-e.x); e.x += cos(a)*2.2; e.y += sin(a)*2.2;
         imageMode(CENTER); image(imgs[e.imgIndex], e.x, e.y, 50, 50);
         if (dist(e.x, e.y, player.x, player.y) < 35) player.hp -= 0.5;
     }
 
-    // 垃圾拾取與丟棄邏輯
+    // 3. 垃圾拾取與跟隨邏輯
     let pickedUpList = deadQueue.filter(e => e.isPickedUp);
     if (pickedUpList.length === 0) currentCarryType = -1;
     
     for (let i = 0; i < deadQueue.length; i++) {
         let e = deadQueue[i];
         if (!e.isPickedUp) {
+            // 拾取半徑
             if (dist(player.x, player.y, e.x, e.y) < 50) {
-                if (currentCarryType === -1 || e.imgIndex === currentCarryType) { e.isPickedUp = true; currentCarryType = e.imgIndex; }
+                if (currentCarryType === -1 || e.imgIndex === currentCarryType) { 
+                    e.isPickedUp = true; 
+                    currentCarryType = e.imgIndex; 
+                }
             }
         } else {
-            let targetX, targetY; let myOrder = pickedUpList.indexOf(e);
+            // 垃圾跟在玩家後面
+            let targetX, targetY; 
+            let myOrder = pickedUpList.indexOf(e);
             if (myOrder === 0) { targetX = player.x; targetY = player.y + 45; }
             else { targetX = pickedUpList[myOrder-1].x; targetY = pickedUpList[myOrder-1].y + 35; }
             e.x = lerp(e.x, targetX, 0.2); e.y = lerp(e.y, targetY, 0.2);
@@ -247,7 +251,7 @@ function processGameLogic() {
         imageMode(CENTER); image(imgs[e.imgIndex], 0, 0, 45, 45); pop();
     }
 
-    // --- 回收判定 (靠近已打開的桶子) ---
+    // 4. 回收判定 (靠近對應的照片垃圾桶)
     if (pickedUpList.length > 0) {
         let first = pickedUpList[0];
         for (let b of bins) {
@@ -263,7 +267,7 @@ function processGameLogic() {
         }
     }
 
-    // Boss 子彈 (保留)
+    // 5. Boss 子彈
     for (let i = bossBullets.length-1; i >= 0; i--) {
         bossBullets[i].update(); bossBullets[i].display();
         if (dist(bossBullets[i].x, bossBullets[i].y, player.x, player.y) < 25) { 
@@ -273,7 +277,14 @@ function processGameLogic() {
     if (player.hp <= 0) gameOver = true;
 }
 
-// 繪製背景草地 (保留)
+class NightMarketMonster {
+    constructor() { 
+        this.x = random(width); this.y = -50; this.hp = 2; 
+        this.imgIndex = floor(random(4)); // 怪物類型對應垃圾桶
+        this.isPickedUp = false; 
+    }
+}
+
 function drawGrass() {
     stroke(60, 140, 50); strokeWeight(2);
     for(let i=50; i<width; i+=150) {
@@ -283,7 +294,6 @@ function drawGrass() {
     }
 }
 
-// 搖桿與輸入 (保留)
 function handleInput() {
     let moveSpeed = 1.6;
     if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) player.vx -= moveSpeed;
@@ -291,46 +301,4 @@ function handleInput() {
     if (keyIsDown(UP_ARROW) || keyIsDown(87)) player.vy -= moveSpeed;
     if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) player.vy += moveSpeed;
     if (mouseIsPressed && !leftJoy.active && !rightJoy.active && frameCount % 7 === 0) {
-        bullets.push(new Bullet(player.x, player.y, atan2(mouseY - player.y, mouseX - player.x)));
-    }
-    if (leftJoy.active) {
-        let a = atan2(leftJoy.currY - leftJoy.y, leftJoy.currX - leftJoy.x);
-        let d = min(dist(leftJoy.x, leftJoy.y, leftJoy.currX, leftJoy.currY), joySize/2);
-        player.vx += cos(a) * (d/(joySize/2)) * 1.8; player.vy += sin(a) * (d/(joySize/2)) * 1.8;
-    }
-    if (rightJoy.active && frameCount % 7 === 0) {
-        bullets.push(new Bullet(player.x, player.y, atan2(rightJoy.currY - rightJoy.y, rightJoy.currX - rightJoy.x)));
-    }
-}
-
-function drawUI() {
-    fill(255); textAlign(LEFT); textSize(18); 
-    text(`小白兔生命: ${floor(player.hp)}%`, 20, 30); 
-    text(`已回收: ${totalCleaned} / ${TARGET_CLEANED}`, 20, 60);
-}
-
-// 觸控函式 (保留)
-function touchStarted() {
-    for (let t of touches) {
-        if (t.x < width/2 && !leftJoy.active) { leftJoy.active = true; leftJoy.id = t.id; leftJoy.x = t.x; leftJoy.y = t.y; leftJoy.currX = t.x; leftJoy.currY = t.y; }
-        else if (t.x >= width/2 && !rightJoy.active) { rightJoy.active = true; rightJoy.id = t.id; rightJoy.x = t.x; rightJoy.y = t.y; rightJoy.currX = t.x; rightJoy.currY = t.y; }
-    }
-    if (gameOver) location.reload(); return false;
-}
-function touchMoved() {
-    for (let t of touches) { if (t.id === leftJoy.id) { leftJoy.currX = t.x; leftJoy.currY = t.y; } if (t.id === rightJoy.id) { rightJoy.currX = t.x; rightJoy.currY = t.y; } }
-    return false;
-}
-function touchEnded() {
-    let sL = false, sR = false; for (let t of touches) { if (t.id === leftJoy.id) sL = true; if (t.id === rightJoy.id) sR = true; }
-    if (!sL) leftJoy.active = false; if (!sR) rightJoy.active = false; return false;
-}
-function drawJoystick(joy, col) {
-    if (joy.active) {
-        fill(col); noStroke(); ellipse(joy.x, joy.y, joySize);
-        let a = atan2(joy.currY - joy.y, joy.currX - joy.x);
-        let d = min(dist(joy.x, joy.y, joy.currX, joy.currY), joySize/2);
-        fill(255, 150); ellipse(joy.x + cos(a)*d, joy.y + sin(a)*d, 60);
-    }
-}
-function mousePressed() { if (gameOver) location.reload(); }
+        bullets.push(new Bullet(player.x, player
